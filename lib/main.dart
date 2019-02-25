@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-import './pages/product_route.dart';
+import './pages/auth_route.dart';
+import './pages/product_page.dart';
 import './pages/products_admin_page.dart';
 import './pages/products_page.dart';
 
 void main() {
-  /*debugPaintBaselinesEnabled = true;
-  debugPaintSizeEnabled = true;
-  debugPaintPointersEnabled = true;*/
+  //debugPaintSizeEnabled = true;
+  //debugPaintBaselinesEnabled = true;
+  //debugPaintPointersEnabled = true;
   runApp(BurnChatApp());
 }
 
@@ -19,7 +20,7 @@ class BurnChatApp extends StatefulWidget {
 }
 
 class _BurnChatAppState extends State<BurnChatApp> {
-  List<Map<String, String>> _products = [];
+  List<Map<String, dynamic>> _products = [];
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +32,9 @@ class _BurnChatAppState extends State<BurnChatApp> {
           accentColor: Colors.deepPurple),
       //home: AuthPage(),
       routes: {
-        '/': (context) => ProductsPage(_products, _addProducts, _deleteProduct),
-        '/admin': (context) => ProductsAdminPage(),
+        '/': (context) => AuthPage(),
+        '/products': (context) => ProductsPage(_products),
+        '/admin': (context) => ProductsAdminPage(_addProducts, _deleteProduct),
       },
       // link: /product/21
       onGenerateRoute: (RouteSettings settings) {
@@ -45,20 +47,20 @@ class _BurnChatAppState extends State<BurnChatApp> {
           return MaterialPageRoute<bool>(
               builder: (context) => ProductPage(
                     title: _products[index]['title'],
+                    description: _products[index]['description'],
                     imageUrl: _products[index]['image'],
+                    price: _products[index]['price'],
                   ));
         }
         return null;
       },
       onUnknownRoute: (RouteSettings settings) {
-        return MaterialPageRoute(
-            builder: (context) =>
-                ProductsPage(_products, _addProducts, _deleteProduct));
+        return MaterialPageRoute(builder: (context) => ProductsPage(_products));
       },
     );
   }
 
-  void _addProducts(Map<String, String> product) {
+  void _addProducts(Map<String, dynamic> product) {
     setState(() {
       _products.add(product);
       print(_products);

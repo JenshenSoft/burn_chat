@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../widgets/ui_elements/title_default.dart';
+
 class ProductPage extends StatelessWidget {
   final String title;
+  final String description;
   final String imageUrl;
+  final double price;
 
-  ProductPage({this.title, this.imageUrl});
+  ProductPage({this.title, this.description, this.imageUrl, this.price});
 
   _showWarningDialog(BuildContext context) {
     showDialog(
@@ -34,6 +38,11 @@ class ProductPage extends StatelessWidget {
         });
   }
 
+  Widget _buildAddress() {
+    return Text('Ukraine, Kharkiv',
+        style: TextStyle(fontFamily: 'Oswald', color: Colors.grey));
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -52,15 +61,25 @@ class ProductPage extends StatelessWidget {
               Image.asset(imageUrl),
               Container(
                 padding: EdgeInsets.all(10),
-                child: Text(title),
+                child: TitleDefault(title),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  _buildAddress(),
+                  Container(
+                      margin: EdgeInsets.all(10),
+                      child: Text('|',
+                          style: TextStyle(
+                              fontFamily: 'Oswald', color: Colors.grey))),
+                  Text('\$' + price.toString(),
+                      style:
+                          TextStyle(fontFamily: 'Oswald', color: Colors.grey)),
+                ],
               ),
               Container(
-                padding: EdgeInsets.all(5),
-                child: RaisedButton(
-                  color: Theme.of(context).accentColor,
-                  onPressed: () => _showWarningDialog(context),
-                  child: Text("Delete"),
-                ),
+                padding: EdgeInsets.all(10),
+                child: Text(description, textAlign: TextAlign.center),
               )
             ],
           ),
