@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import './pages/auth_route.dart';
+import './pages/auth_page.dart';
 import './pages/product_page.dart';
 import './pages/products_admin_page.dart';
 import './pages/products_page.dart';
@@ -28,8 +28,9 @@ class _BurnChatAppState extends State<BurnChatApp> {
       //debugShowMaterialGrid: true,
       theme: ThemeData(
           brightness: Brightness.light,
-          primaryColor: Colors.deepOrange,
-          accentColor: Colors.deepPurple),
+          primaryColor: Colors.amber,
+          accentColor: Colors.amberAccent,
+          buttonColor: Colors.red),
       //home: AuthPage(),
       routes: {
         '/': (context) => AuthPage(),
