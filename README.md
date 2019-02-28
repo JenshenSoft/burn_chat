@@ -1,4 +1,5 @@
-# burn_chat
+# Burn chat
+[![Codemagic build status](https://api.codemagic.io/apps/5c632b5f15fbd500139d17cc/5c632b5f15fbd500139d17cb/status_badge.svg)](https://codemagic.io/apps/5c632b5f15fbd500139d17cc/5c632b5f15fbd500139d17cb/latest_build)
 
 A new Flutter project.
 
