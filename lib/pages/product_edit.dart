@@ -1,10 +1,11 @@
+import 'package:burn_chat/models/product.dart';
 import 'package:flutter/material.dart';
 
 class ProductEditPage extends StatefulWidget {
   final Function addProduct;
   final Function updateProduct;
   final int productIndex;
-  final Map<String, dynamic> product;
+  final Product product;
 
   ProductEditPage(
       {this.addProduct, this.updateProduct, this.product, this.productIndex});
@@ -29,7 +30,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
     return TextFormField(
       decoration: InputDecoration(labelText: 'Product title'),
       autocorrect: true,
-      initialValue: widget.product == null ? '' : widget.product['title'],
+      initialValue: widget.product == null ? '' : widget.product.title,
       validator: (value) {
         if (value.trim().isEmpty || value.length < 5) {
           return 'Titile is required and should be 5+ characters long';
@@ -46,7 +47,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
       autocorrect: true,
       decoration: InputDecoration(labelText: 'Product description'),
       maxLines: 4,
-      initialValue: widget.product == null ? '' : widget.product['description'],
+      initialValue: widget.product == null ? '' : widget.product.description,
       validator: (value) {
         if (value.trim().isEmpty || value.length < 10) {
           return 'Description is required and should be 10+ characters long';
@@ -64,7 +65,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
       decoration: InputDecoration(labelText: 'Product price'),
       keyboardType: TextInputType.number,
       initialValue:
-          widget.product == null ? '' : widget.product['price'].toString(),
+          widget.product == null ? '' : widget.product.price.toString(),
       validator: (value) {
         if (value.trim().isEmpty ||
             !RegExp(r'^(?:[1-9]\d*|0)?(?:[.,]\d+)?$').hasMatch(value)) {
@@ -82,10 +83,16 @@ class _ProductEditPageState extends State<ProductEditPage> {
       return;
     }
     _formKey.currentState.save();
+    var product = Product(
+      title: _formData['title'],
+      description: _formData['description'],
+      image: _formData['image'],
+      price: _formData['price'],
+    );
     if (widget.product == null) {
-      widget.addProduct(_formData);
+      widget.addProduct(product);
     } else {
-      widget.updateProduct(widget.productIndex, _formData);
+      widget.updateProduct(widget.productIndex, product);
     }
     Navigator.pushReplacementNamed(context, '/products');
   }

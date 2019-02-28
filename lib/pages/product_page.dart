@@ -10,7 +10,11 @@ class ProductPage extends StatelessWidget {
   final String imageUrl;
   final double price;
 
-  ProductPage({this.title, this.description, this.imageUrl, this.price});
+  ProductPage(
+      {@required this.title,
+      @required this.description,
+      @required this.imageUrl,
+      @required this.price});
 
   _showWarningDialog(BuildContext context) {
     showDialog(

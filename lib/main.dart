@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import './models/product.dart';
 import './pages/auth_page.dart';
 import './pages/product_page.dart';
 import './pages/products_admin_page.dart';
@@ -20,7 +21,7 @@ class BurnChatApp extends StatefulWidget {
 }
 
 class _BurnChatAppState extends State<BurnChatApp> {
-  List<Map<String, dynamic>> _products = [];
+  List<Product> _products = [];
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +36,8 @@ class _BurnChatAppState extends State<BurnChatApp> {
       routes: {
         '/': (context) => AuthPage(),
         '/products': (context) => ProductsPage(_products),
-        '/admin': (context) =>
-            ProductsAdminPage(_addProducts, _updateProduct, _deleteProduct, _products),
+        '/admin': (context) => ProductsAdminPage(
+            _addProducts, _updateProduct, _deleteProduct, _products),
       },
       // link: /product/21
       onGenerateRoute: (RouteSettings settings) {
@@ -48,10 +49,10 @@ class _BurnChatAppState extends State<BurnChatApp> {
           final int index = int.parse(pathElements[2]);
           return MaterialPageRoute<bool>(
               builder: (context) => ProductPage(
-                    title: _products[index]['title'],
-                    description: _products[index]['description'],
-                    imageUrl: _products[index]['image'],
-                    price: _products[index]['price'],
+                    title: _products[index].title,
+                    description: _products[index].description,
+                    imageUrl: _products[index].image,
+                    price: _products[index].price,
                   ));
         }
         return null;
@@ -62,14 +63,14 @@ class _BurnChatAppState extends State<BurnChatApp> {
     );
   }
 
-  void _addProducts(Map<String, dynamic> product) {
+  void _addProducts(Product product) {
     setState(() {
       _products.add(product);
       print(_products);
     });
   }
 
-  void _updateProduct(int index, Map<String, dynamic> product) {
+  void _updateProduct(int index, Product product) {
     setState(() {
       _products[index] = product;
       print(_products);
