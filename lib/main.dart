@@ -35,7 +35,8 @@ class _BurnChatAppState extends State<BurnChatApp> {
       routes: {
         '/': (context) => AuthPage(),
         '/products': (context) => ProductsPage(_products),
-        '/admin': (context) => ProductsAdminPage(_addProducts, _deleteProduct),
+        '/admin': (context) =>
+            ProductsAdminPage(_addProducts, _updateProduct, _deleteProduct, _products),
       },
       // link: /product/21
       onGenerateRoute: (RouteSettings settings) {
@@ -64,6 +65,13 @@ class _BurnChatAppState extends State<BurnChatApp> {
   void _addProducts(Map<String, dynamic> product) {
     setState(() {
       _products.add(product);
+      print(_products);
+    });
+  }
+
+  void _updateProduct(int index, Map<String, dynamic> product) {
+    setState(() {
+      _products[index] = product;
       print(_products);
     });
   }

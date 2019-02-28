@@ -8,9 +8,13 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  String _email;
-  String _password;
-  bool _acceptTerms = false;
+  final Map<String, dynamic> _formData = {
+    'email ': null,
+    'password': null,
+    'acceptTerms': false
+  };
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   DecorationImage _buildBackgroundImage() {
     return DecorationImage(
@@ -22,23 +26,35 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Widget _buildEmailTextField() {
-    return TextField(
+    return TextFormField(
+      validator: (value) {
+        if (value.trim().isEmpty ||
+            !RegExp(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+                .hasMatch(value)) {
+          return 'Email is not valid';
+        }
+      },
       decoration: InputDecoration(
           labelText: 'Email', filled: true, fillColor: Colors.white),
       keyboardType: TextInputType.emailAddress,
-      onChanged: (value) {
-        _email = value;
+      onSaved: (value) {
+        _formData['email'] = value;
       },
     );
   }
 
   Widget _buildPasswordTextField() {
-    return TextField(
+    return TextFormField(
+      validator: (value) {
+        if (value.trim().isEmpty || value.length < 6) {
+          return 'Password is required and should be 6+ characters long';
+        }
+      },
       obscureText: true,
       decoration: InputDecoration(
           labelText: 'Password', filled: true, fillColor: Colors.white),
-      onChanged: (value) {
-        _password = value;
+      onSaved: (value) {
+        _formData['password'] = value;
       },
     );
   }
@@ -46,27 +62,29 @@ class _AuthPageState extends State<AuthPage> {
   Widget _buildSwitch() {
     return SwitchListTile(
       title: Text("Accept terms"),
-      value: _acceptTerms,
+      value: _formData['acceptTerms'],
       onChanged: (bool value) {
         setState(() {
-          _acceptTerms = value;
+          _formData['acceptTerms'] = value;
         });
       },
     );
   }
 
   void doLogin() {
-    print(_email);
-    print(_password);
+    if (!_formKey.currentState.validate()) {
+      return;
+    }
+    _formKey.currentState.save();
+
+    print(_formData);
     Navigator.pushReplacementNamed(context, '/products');
   }
 
   @override
   Widget build(BuildContext context) {
     var deviceWidth = MediaQuery.of(context).size.width;
-    final double targetWidth = deviceWidth > 550
-        ? 500
-        : deviceWidth * 0.95;
+    final double targetWidth = deviceWidth > 550 ? 500 : deviceWidth * 0.95;
 
     return Scaffold(
       appBar: AppBar(
@@ -80,22 +98,25 @@ class _AuthPageState extends State<AuthPage> {
           child: SingleChildScrollView(
             child: Container(
               width: targetWidth,
-              child: Column(
-                children: <Widget>[
-                  _buildEmailTextField(),
-                  SizedBox(height: 10),
-                  _buildPasswordTextField(),
-                  _buildSwitch(),
-                  SizedBox(
-                    height: 10.0,
-                  ),
-                  RaisedButton(
-                    textColor: Colors.white,
-                    child: Text('Login'),
-                    onPressed: doLogin,
-                  )
-                  //Text()
-                ],
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: <Widget>[
+                    _buildEmailTextField(),
+                    SizedBox(height: 10),
+                    _buildPasswordTextField(),
+                    _buildSwitch(),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    RaisedButton(
+                      textColor: Colors.white,
+                      child: Text('Login'),
+                      onPressed: doLogin,
+                    )
+                    //Text()
+                  ],
+                ),
               ),
             ),
           ),
