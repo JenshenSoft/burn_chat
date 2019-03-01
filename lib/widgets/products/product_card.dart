@@ -1,49 +1,58 @@
-import 'package:burn_chat/models/product.dart';
 import 'package:flutter/material.dart';
 
+import 'package:scoped_model/scoped_model.dart';
+
+import './price_tag.dart';
 import './address_tag.dart';
-import './product_tag.dart';
 import '../ui_elements/title_default.dart';
+import '../../data/models/product.dart';
+import '../../data/scoped-models/products.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
-  final int index;
+  final int productIndex;
 
-  const ProductCard(this.product, this.index);
+  ProductCard(this.product, this.productIndex);
 
-  Widget _buildTitle() {
-    return Padding(
-      padding: EdgeInsets.only(top: 10),
+  Widget _buildTitlePriceRow() {
+    return Container(
+      padding: EdgeInsets.only(top: 10.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           TitleDefault(product.title),
-          SizedBox(width: 8),
-          PriceTag(product.price.toString()),
+          SizedBox(
+            width: 8.0,
+          ),
+          PriceTag(product.price.toString())
         ],
       ),
     );
   }
 
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildActionButtons(BuildContext context) {
     return ButtonBar(
       alignment: MainAxisAlignment.center,
       children: <Widget>[
         IconButton(
           icon: Icon(Icons.info),
           color: Theme.of(context).accentColor,
-          onPressed: () =>
-              Navigator.pushNamed<bool>(context, '/product/' + index.toString())
-                  .then((bool value) {
-                /*if (value) {
-                        deleteProduct(index);
-                      }*/
-              }),
+          onPressed: () => Navigator.pushNamed<bool>(
+              context, '/product/' + productIndex.toString()),
         ),
-        IconButton(
-          icon: Icon(Icons.favorite_border),
-          color: Colors.yellow,
-          onPressed: () {},
+        ScopedModelDescendant<ProductsModel>(
+          builder: (BuildContext context, Widget child, ProductsModel model) {
+            return IconButton(
+              icon: Icon(model.products[productIndex].isFavorite
+                  ? Icons.favorite
+                  : Icons.favorite_border),
+              color: Colors.red,
+              onPressed: () {
+                model.selectProduct(productIndex);
+                model.toggleProductFavoriteStatus();
+              },
+            );
+          },
         ),
       ],
     );
@@ -55,11 +64,12 @@ class ProductCard extends StatelessWidget {
       child: Column(
         children: <Widget>[
           Image.asset(product.image),
-          _buildTitle(),
-          AddressTag('Ukraine, Kharkiv'),
-          _buildBottomBar(context)
+          _buildTitlePriceRow(),
+          AddressTag('Union Square, San Francisco'),
+          _buildActionButtons(context)
         ],
       ),
     );
+    ;
   }
 }

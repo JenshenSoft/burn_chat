@@ -9,11 +9,10 @@ class AuthPage extends StatefulWidget {
 
 class _AuthPageState extends State<AuthPage> {
   final Map<String, dynamic> _formData = {
-    'email ': null,
+    'email': null,
     'password': null,
     'acceptTerms': false
   };
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   DecorationImage _buildBackgroundImage() {
@@ -27,17 +26,17 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _buildEmailTextField() {
     return TextFormField(
-      validator: (value) {
-        if (value.trim().isEmpty ||
+      decoration: InputDecoration(
+          labelText: 'E-Mail', filled: true, fillColor: Colors.white),
+      keyboardType: TextInputType.emailAddress,
+      validator: (String value) {
+        if (value.isEmpty ||
             !RegExp(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
                 .hasMatch(value)) {
-          return 'Email is not valid';
+          return 'Please enter a valid email';
         }
       },
-      decoration: InputDecoration(
-          labelText: 'Email', filled: true, fillColor: Colors.white),
-      keyboardType: TextInputType.emailAddress,
-      onSaved: (value) {
+      onSaved: (String value) {
         _formData['email'] = value;
       },
     );
@@ -45,56 +44,55 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _buildPasswordTextField() {
     return TextFormField(
-      validator: (value) {
-        if (value.trim().isEmpty || value.length < 6) {
-          return 'Password is required and should be 6+ characters long';
-        }
-      },
-      obscureText: true,
       decoration: InputDecoration(
           labelText: 'Password', filled: true, fillColor: Colors.white),
-      onSaved: (value) {
+      obscureText: true,
+      validator: (String value) {
+        if (value.isEmpty || value.length < 6) {
+          return 'Password invalid';
+        }
+      },
+      onSaved: (String value) {
         _formData['password'] = value;
       },
     );
   }
 
-  Widget _buildSwitch() {
+  Widget _buildAcceptSwitch() {
     return SwitchListTile(
-      title: Text("Accept terms"),
       value: _formData['acceptTerms'],
       onChanged: (bool value) {
         setState(() {
           _formData['acceptTerms'] = value;
         });
       },
+      title: Text('Accept Terms'),
     );
   }
 
-  void doLogin() {
-    if (!_formKey.currentState.validate()) {
+  void _submitForm() {
+    if (!_formKey.currentState.validate() || !_formData['acceptTerms']) {
       return;
     }
     _formKey.currentState.save();
-
     print(_formData);
     Navigator.pushReplacementNamed(context, '/products');
   }
 
   @override
   Widget build(BuildContext context) {
-    var deviceWidth = MediaQuery.of(context).size.width;
-    final double targetWidth = deviceWidth > 550 ? 500 : deviceWidth * 0.95;
-
+    final double deviceWidth = MediaQuery.of(context).size.width;
+    final double targetWidth = deviceWidth > 550.0 ? 500.0 : deviceWidth * 0.95;
     return Scaffold(
       appBar: AppBar(
-        title: Text("Login"),
+        title: Text('Login'),
       ),
       body: Container(
-        decoration: BoxDecoration(image: _buildBackgroundImage()),
-        padding: EdgeInsets.all(10),
-        child: Container(
-          alignment: Alignment.center,
+        decoration: BoxDecoration(
+          image: _buildBackgroundImage(),
+        ),
+        padding: EdgeInsets.all(10.0),
+        child: Center(
           child: SingleChildScrollView(
             child: Container(
               width: targetWidth,
@@ -103,18 +101,19 @@ class _AuthPageState extends State<AuthPage> {
                 child: Column(
                   children: <Widget>[
                     _buildEmailTextField(),
-                    SizedBox(height: 10),
+                    SizedBox(
+                      height: 10.0,
+                    ),
                     _buildPasswordTextField(),
-                    _buildSwitch(),
+                    _buildAcceptSwitch(),
                     SizedBox(
                       height: 10.0,
                     ),
                     RaisedButton(
                       textColor: Colors.white,
-                      child: Text('Login'),
-                      onPressed: doLogin,
-                    )
-                    //Text()
+                      child: Text('LOGIN'),
+                      onPressed: _submitForm,
+                    ),
                   ],
                 ),
               ),

@@ -7,12 +7,10 @@ class TitleDefault extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Flexible(
-      child: Text(
-        title,
-        style: TextStyle(
-            fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Oswald'),
-      ),
+    return Text(
+      title,
+      style: TextStyle(
+          fontSize: 26.0, fontWeight: FontWeight.bold, fontFamily: 'Oswald'),
     );
   }
 }
