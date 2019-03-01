@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-
 import 'package:scoped_model/scoped_model.dart';
-// import 'package:flutter/rendering.dart';
 
 import './pages/auth_page.dart';
+
 import './pages/products_admin_page.dart';
 import './pages/products_page.dart';
 import './pages/product_page.dart';
-import './data/scoped-models/products.dart';
+import './data/scoped-models/main.dart';
+// import 'package:flutter/rendering.dart';
 
 void main() {
   // debugPaintSizeEnabled = true;
@@ -26,8 +26,8 @@ class BurnChatApp extends StatefulWidget {
 class _BurnChatAppState extends State<BurnChatApp> {
   @override
   Widget build(BuildContext context) {
-    return ScopedModel<ProductsModel>(
-      model: ProductsModel(),
+    return ScopedModel<MainModel>(
+      model: MainModel(),
       child: MaterialApp(
         // debugShowMaterialGrid: true,
         theme: ThemeData(
