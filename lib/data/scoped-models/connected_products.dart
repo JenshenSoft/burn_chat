@@ -1,8 +1,13 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 import '../models/product.dart';
 import '../models/user.dart';
+
+const url = 'https://burn-chat-99efa.firebaseio.com/products.json';
 
 class ConnectedProducts extends Model {
   List<Product> _products = [];
@@ -14,16 +19,29 @@ class ConnectedProducts extends Model {
       @required String description,
       @required String image,
       @required double price}) {
-    final Product newProduct = Product(
-        title: title,
-        description: description,
-        price: price,
-        image: image,
-        userEmail: _authenticatedUser.name,
-        userId: _authenticatedUser.id);
-    _products.add(newProduct);
-    _selProductIndex = null;
-    notifyListeners();
+    final Map<String, dynamic> data = {
+      'title': title,
+      'description': description,
+      'price': price,
+      'userEmail': _authenticatedUser.name,
+      'userId': _authenticatedUser.id,
+      'image':
+          'https://www.google.com/url?sa=i&source=images&cd=&ved=2ahUKEwjXjKeq7OjgAhXJlYsKHYhwDS0QjRx6BAgBEAU&url=http%3A%2F%2Fmikemoir.com%2Fmikemoir%2Fwhy-you-should-treat-your-content-like-a-product%2F&psig=AOvVaw2vByxoH88OTOcwSJ1-oafX&ust=1551801259887514',
+    };
+    http.post(url, body: json.encode(data)).then((http.Response response) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final Product newProduct = Product(
+          id: responseData['name'],
+          title: title,
+          description: description,
+          price: price,
+          image: image,
+          userEmail: _authenticatedUser.name,
+          userId: _authenticatedUser.id);
+      _products.add(newProduct);
+      _selProductIndex = null;
+      notifyListeners();
+    });
   }
 }
 
@@ -93,6 +111,26 @@ mixin ProductsModel on ConnectedProducts {
     _products[_selProductIndex] = updatedProduct;
     _selProductIndex = null;
     notifyListeners();
+  }
+
+  void fetchProducts() {
+    http.get(url).then((response) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      final List<Product> products = [];
+      data.forEach((id, data) {
+        products.add(Product(
+          id: id,
+          title: data['title'],
+          description: data['description'],
+          image: data['image'],
+          userId: data['userId'],
+          userEmail: data['userEmail'],
+          price: data['price'],
+        ));
+      });
+      _products = products;
+      notifyListeners();
+    });
   }
 
   void selectProduct(int index) {

@@ -26,8 +26,9 @@ class BurnChatApp extends StatefulWidget {
 class _BurnChatAppState extends State<BurnChatApp> {
   @override
   Widget build(BuildContext context) {
+    var mainModel = MainModel();
     return ScopedModel<MainModel>(
-      model: MainModel(),
+      model: mainModel,
       child: MaterialApp(
         // debugShowMaterialGrid: true,
         theme: ThemeData(
@@ -38,7 +39,7 @@ class _BurnChatAppState extends State<BurnChatApp> {
         // home: AuthPage(),
         routes: {
           '/': (BuildContext context) => AuthPage(),
-          '/products': (BuildContext context) => ProductsPage(),
+          '/products': (BuildContext context) => ProductsPage(mainModel),
           '/admin': (BuildContext context) => ProductsAdminPage(),
         },
         // link: /product/21
@@ -58,7 +59,7 @@ class _BurnChatAppState extends State<BurnChatApp> {
         },
         onUnknownRoute: (RouteSettings settings) {
           return MaterialPageRoute(
-              builder: (BuildContext context) => ProductsPage());
+              builder: (BuildContext context) => ProductsPage(null));
         },
       ),
     );
