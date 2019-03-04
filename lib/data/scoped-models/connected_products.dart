@@ -87,13 +87,11 @@ mixin ProductsModel on ConnectedProducts {
         userEmail: _authenticatedUser.name,
         userId: _authenticatedUser.id);
     _products[_selProductIndex] = newProduct;
-    _selProductIndex = null;
     notifyListeners();
   }
 
   void deleteProduct() {
     _products.removeAt(_selProductIndex);
-    _selProductIndex = null;
     notifyListeners();
   }
 
@@ -109,7 +107,6 @@ mixin ProductsModel on ConnectedProducts {
         userId: selectedProduct.userId,
         isFavorite: newFavoriteStatus);
     _products[_selProductIndex] = updatedProduct;
-    _selProductIndex = null;
     notifyListeners();
   }
 
@@ -135,7 +132,9 @@ mixin ProductsModel on ConnectedProducts {
 
   void selectProduct(int index) {
     _selProductIndex = index;
-    notifyListeners();
+    if (index != null) {
+      notifyListeners();
+    }
   }
 
   void toggleDisplayMode() {
