@@ -24,7 +24,7 @@ class _ProductListState extends State<ProductListPage> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (BuildContext context) {
-              return ProductEditPage(widget.mainModel);
+              return ProductEditPage();
             },
           ),
         ).then((_) {

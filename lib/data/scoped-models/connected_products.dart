@@ -17,39 +17,6 @@ class ConnectedProducts extends Model {
   String _selProductId;
   User _authenticatedUser;
   bool _isLoading = false;
-
-  Future<Null> addProduct(
-      {@required String title,
-      @required String description,
-      @required String image,
-      @required double price}) {
-    _isLoading = true;
-    notifyListeners();
-    final Map<String, dynamic> data = {
-      'title': title,
-      'description': description,
-      'price': price,
-      'userEmail': _authenticatedUser.name,
-      'userId': _authenticatedUser.id,
-      'image': imageUrl,
-    };
-    return http
-        .post(url + ".json", body: json.encode(data))
-        .then((http.Response response) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      final Product newProduct = Product(
-          id: responseData['name'],
-          title: title,
-          description: description,
-          price: price,
-          image: image,
-          userEmail: _authenticatedUser.name,
-          userId: _authenticatedUser.id);
-      _products.add(newProduct);
-      _isLoading = false;
-      notifyListeners();
-    });
-  }
 }
 
 mixin ProductsModel on ConnectedProducts {
@@ -87,11 +54,54 @@ mixin ProductsModel on ConnectedProducts {
     return _showFavorites;
   }
 
-  Future<Null> updateProduct(
+  Future<bool> addProduct(
       {@required String title,
       @required String description,
       @required String image,
-      @required double price}) {
+      @required double price}) async {
+    _isLoading = true;
+    notifyListeners();
+    final Map<String, dynamic> data = {
+      'title': title,
+      'description': description,
+      'price': price,
+      'userEmail': _authenticatedUser.name,
+      'userId': _authenticatedUser.id,
+      'image': imageUrl,
+    };
+    try {
+      final http.Response response =
+          await http.post(url + ".json", body: json.encode(data));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final Product newProduct = Product(
+          id: responseData['name'],
+          title: title,
+          description: description,
+          price: price,
+          image: image,
+          userEmail: _authenticatedUser.name,
+          userId: _authenticatedUser.id);
+      _products.add(newProduct);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (error) {
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateProduct(
+      {@required String title,
+      @required String description,
+      @required String image,
+      @required double price}) async {
     _isLoading = true;
     notifyListeners();
     final Product newProduct = Product(
@@ -116,13 +126,21 @@ mixin ProductsModel on ConnectedProducts {
     return http
         .put(newUrl, body: json.encode(data))
         .then((http.Response response) {
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return false;
+      }
       _products[selectedProductIndex] = newProduct;
       _isLoading = false;
       notifyListeners();
+      return true;
+    }).catchError((error) {
+      _isLoading = false;
+      notifyListeners();
+      return false;
     });
   }
 
-  Future<Null> deleteProduct() {
+  Future<bool> deleteProduct() async {
     _isLoading = true;
     var id = selectedProduct.id;
     int selectedProductIndex =
@@ -132,8 +150,18 @@ mixin ProductsModel on ConnectedProducts {
     notifyListeners();
     String newUrl = url + "/$id.json";
     return http.delete(newUrl).then((http.Response response) {
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
       _isLoading = false;
       notifyListeners();
+      return true;
+    }).catchError((error) {
+      _isLoading = false;
+      notifyListeners();
+      return false;
     });
   }
 
@@ -153,10 +181,15 @@ mixin ProductsModel on ConnectedProducts {
     notifyListeners();
   }
 
-  Future<Null> fetchProducts() {
+  Future<bool> fetchProducts() async {
     _isLoading = true;
     notifyListeners();
     return http.get(url + ".json").then((response) {
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
       final Map<String, dynamic> data = json.decode(response.body);
       final List<Product> products = [];
       if (data != null) {
@@ -176,14 +209,17 @@ mixin ProductsModel on ConnectedProducts {
       _isLoading = false;
       notifyListeners();
       _selProductId = null;
+      return true;
+    }).catchError((error) {
+      _isLoading = false;
+      notifyListeners();
+      return false;
     });
   }
 
   void selectProduct(String productId) {
     _selProductId = productId;
-    if (productId != null) {
-      notifyListeners();
-    }
+    notifyListeners();
   }
 
   void toggleDisplayMode() {

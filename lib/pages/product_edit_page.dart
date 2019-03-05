@@ -7,9 +7,6 @@ import '../data/scoped-models/main.dart';
 import '../widgets/helpers/ensure_visible.dart';
 
 class ProductEditPage extends StatefulWidget {
-  final MainModel mainModel;
-
-  ProductEditPage(this.mainModel);
 
   @override
   State<StatefulWidget> createState() {
@@ -28,12 +25,6 @@ class _ProductEditPageState extends State<ProductEditPage> {
   final _titleFocusNode = FocusNode();
   final _descriptionFocusNode = FocusNode();
   final _priceFocusNode = FocusNode();
-
-  @override
-  void initState() {
-    widget.mainModel.fetchProducts();
-    super.initState();
-  }
 
   Widget _buildTitleTextField(Product product) {
     return EnsureVisibleWhenFocused(
@@ -166,8 +157,28 @@ class _ProductEditPageState extends State<ProductEditPage> {
               description: _formData['description'],
               price: _formData['price'],
               image: _formData['image'])
-          .then((_) => Navigator.pushReplacementNamed(context, '/products')
-              .then((_) => setSelectedProduct(null)));
+          .then((success) {
+        if (success) {
+          Navigator
+              .pushReplacementNamed(context, '/products')
+              .then((_) => setSelectedProduct(null));
+        } else {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Something went wrong'),
+                  content: Text('Please, try again later'),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('OK'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    )
+                  ],
+                );
+              });
+        }
+      });
     } else {
       updateProduct(
         title: _formData['title'],
