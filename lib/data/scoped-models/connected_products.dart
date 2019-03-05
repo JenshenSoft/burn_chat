@@ -4,13 +4,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/auth.dart';
 import '../models/product.dart';
 import '../models/user.dart';
 
 const url = 'https://burn-chat-99efa.firebaseio.com/products';
+const auth = ".json?auth=";
 const imageUrl =
     'http://mikemoir.com/mikemoir/wp-content/uploads/2015/06/MedRes_Product-presentation-2.jpg';
+
+const KEY = 'AIzaSyDjp1_evJWQXf_qdfjuiqUtktFV-Exjuu4';
 
 class ConnectedProducts extends Model {
   List<Product> _products = [];
@@ -65,13 +70,13 @@ mixin ProductsModel on ConnectedProducts {
       'title': title,
       'description': description,
       'price': price,
-      'userEmail': _authenticatedUser.name,
+      'userEmail': _authenticatedUser.email,
       'userId': _authenticatedUser.id,
       'image': imageUrl,
     };
     try {
-      final http.Response response =
-          await http.post(url + ".json", body: json.encode(data));
+      final http.Response response = await http
+          .post(url + auth + _authenticatedUser.token, body: json.encode(data));
       if (response.statusCode != 200 && response.statusCode != 201) {
         _isLoading = false;
         notifyListeners();
@@ -84,7 +89,7 @@ mixin ProductsModel on ConnectedProducts {
           description: description,
           price: price,
           image: image,
-          userEmail: _authenticatedUser.name,
+          userEmail: _authenticatedUser.email,
           userId: _authenticatedUser.id);
       _products.add(newProduct);
       _isLoading = false;
@@ -110,18 +115,19 @@ mixin ProductsModel on ConnectedProducts {
         description: description,
         price: price,
         image: image,
-        userEmail: _authenticatedUser.name,
+        userEmail: _authenticatedUser.email,
         userId: _authenticatedUser.id);
     final Map<String, dynamic> data = {
       'title': title,
       'description': description,
       'price': price,
-      'userEmail': _authenticatedUser.name,
+      'userEmail': _authenticatedUser.email,
       'userId': _authenticatedUser.id,
       'image': imageUrl,
     };
 
-    String newUrl = url + "/${selectedProduct.id}.json";
+    String newUrl =
+        url + "/${selectedProduct.id}" + auth + _authenticatedUser.token;
     print(newUrl);
     return http
         .put(newUrl, body: json.encode(data))
@@ -148,7 +154,7 @@ mixin ProductsModel on ConnectedProducts {
     _products.removeAt(selectedProductIndex);
     _selProductId = null;
     notifyListeners();
-    String newUrl = url + "/$id.json";
+    String newUrl = url + "/$id" + auth + _authenticatedUser.token;
     return http.delete(newUrl).then((http.Response response) {
       if (response.statusCode != 200 && response.statusCode != 201) {
         _isLoading = false;
@@ -184,7 +190,7 @@ mixin ProductsModel on ConnectedProducts {
   Future<bool> fetchProducts() async {
     _isLoading = true;
     notifyListeners();
-    return http.get(url + ".json").then((response) {
+    return http.get(url + auth + _authenticatedUser.token).then((response) {
       if (response.statusCode != 200 && response.statusCode != 201) {
         _isLoading = false;
         notifyListeners();
@@ -229,8 +235,71 @@ mixin ProductsModel on ConnectedProducts {
 }
 
 mixin UserModel on ConnectedProducts {
-  void login(String email, String password) {
-    _authenticatedUser = User(id: "cdskmcds", name: email, password: password);
+  User get user {
+    return _authenticatedUser;
+  }
+
+  Future<Map<String, dynamic>> authenticate(String email, String password,
+      [AuthMode mode = AuthMode.Login]) async {
+    _isLoading = true;
+    notifyListeners();
+    final Map<String, dynamic> authData = {
+      'email': email,
+      'password': password,
+      'returnSecureToken': true
+    };
+    http.Response response;
+    if (mode == AuthMode.Login) {
+      response = await http.post(
+        "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=$KEY",
+        body: json.encode(authData),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } else {
+      response = await http.post(
+        "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=$KEY",
+        body: json.encode(authData),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
+
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    bool hasError = true;
+    String message = 'Something went wrong.';
+    print(responseData);
+    if (responseData.containsKey('idToken')) {
+      hasError = false;
+      message = 'Authentication succeeded!';
+      _authenticatedUser = User(
+        id: responseData['localId'],
+        email: email,
+        token: responseData['idToken'],
+      );
+      var prefs = await SharedPreferences.getInstance();
+      prefs.setString("id", _authenticatedUser.id);
+      prefs.setString("email", _authenticatedUser.email);
+      prefs.setString("token", _authenticatedUser.token);
+    } else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
+      message = 'This email already exists.';
+    } else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND') {
+      message = 'This email was not found.';
+    } else if (responseData['error']['message'] == 'INVALID_PASSWORD') {
+      message = 'The password is invalid.';
+    }
+    _isLoading = false;
+    notifyListeners();
+    return {'success': !hasError, 'message': message};
+  }
+
+  void autoAuthenticate() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String token = prefs.getString('token');
+    if (token != null) {
+      final String userEmail = prefs.getString('userEmail');
+      final String userId = prefs.getString('userId');
+      _authenticatedUser = User(id: userId, email: userEmail, token: token);
+      notifyListeners();
+    }
   }
 }
 
