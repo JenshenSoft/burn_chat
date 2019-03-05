@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:scoped_model/scoped_model.dart';
 
 import '../data/models/product.dart';
@@ -6,6 +7,10 @@ import '../data/scoped-models/main.dart';
 import '../widgets/helpers/ensure_visible.dart';
 
 class ProductEditPage extends StatefulWidget {
+  final MainModel mainModel;
+
+  ProductEditPage(this.mainModel);
+
   @override
   State<StatefulWidget> createState() {
     return _ProductEditPageState();
@@ -23,6 +28,12 @@ class _ProductEditPageState extends State<ProductEditPage> {
   final _titleFocusNode = FocusNode();
   final _descriptionFocusNode = FocusNode();
   final _priceFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    widget.mainModel.fetchProducts();
+    super.initState();
+  }
 
   Widget _buildTitleTextField(Product product) {
     return EnsureVisibleWhenFocused(
@@ -90,16 +101,18 @@ class _ProductEditPageState extends State<ProductEditPage> {
   Widget _buildSubmitButton() {
     return ScopedModelDescendant<MainModel>(
       builder: (BuildContext context, Widget child, MainModel model) {
-        return RaisedButton(
-          child: Text('Save'),
-          textColor: Colors.white,
-          onPressed: () => _submitForm(
-                model.addProduct,
-                model.updateProduct,
-                model.selectProduct,
-                model.selectedProductIndex,
-              ),
-        );
+        return model.isLoading
+            ? Center(child: CircularProgressIndicator())
+            : RaisedButton(
+                child: Text('Save'),
+                textColor: Colors.white,
+                onPressed: () => _submitForm(
+                      model.addProduct,
+                      model.updateProduct,
+                      model.selectProduct,
+                      model.selectedProductIndex,
+                    ),
+              );
       },
     );
   }
@@ -141,30 +154,29 @@ class _ProductEditPageState extends State<ProductEditPage> {
     );
   }
 
-  void _submitForm(
-      Function addProduct, Function updateProduct, Function setSelectedProduct,
+  void _submitForm(Function addProduct, Function updateProduct, Function setSelectedProduct,
       [int selectedProductIndex]) {
     if (!_formKey.currentState.validate()) {
       return;
     }
     _formKey.currentState.save();
-    if (selectedProductIndex == null) {
+    if (selectedProductIndex == -1) {
       addProduct(
-          title: _formData['title'],
-          description: _formData['description'],
-          price: _formData['price'],
-          image: _formData['image']);
+              title: _formData['title'],
+              description: _formData['description'],
+              price: _formData['price'],
+              image: _formData['image'])
+          .then((_) => Navigator.pushReplacementNamed(context, '/products')
+              .then((_) => setSelectedProduct(null)));
     } else {
       updateProduct(
         title: _formData['title'],
         description: _formData['description'],
         price: _formData['price'],
         image: _formData['image'],
-      );
+      ).then((_) => Navigator.pushReplacementNamed(context, '/products')
+          .then((_) => setSelectedProduct(null)));
     }
-
-    Navigator.pushReplacementNamed(context, '/products')
-        .then((_) => setSelectedProduct(null));
   }
 
   @override
@@ -173,7 +185,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
       builder: (BuildContext context, Widget child, MainModel model) {
         final Widget pageContent =
             _buildPageContent(context, model.selectedProduct);
-        return model.selectedProductIndex == null
+        return model.selectedProductIndex == -1
             ? pageContent
             : Scaffold(
                 appBar: AppBar(

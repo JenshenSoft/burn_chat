@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -7,28 +8,34 @@ import 'package:scoped_model/scoped_model.dart';
 import '../models/product.dart';
 import '../models/user.dart';
 
-const url = 'https://burn-chat-99efa.firebaseio.com/products.json';
+const url = 'https://burn-chat-99efa.firebaseio.com/products';
+const imageUrl =
+    'http://mikemoir.com/mikemoir/wp-content/uploads/2015/06/MedRes_Product-presentation-2.jpg';
 
 class ConnectedProducts extends Model {
   List<Product> _products = [];
-  int _selProductIndex;
+  String _selProductId;
   User _authenticatedUser;
+  bool _isLoading = false;
 
-  void addProduct(
+  Future<Null> addProduct(
       {@required String title,
       @required String description,
       @required String image,
       @required double price}) {
+    _isLoading = true;
+    notifyListeners();
     final Map<String, dynamic> data = {
       'title': title,
       'description': description,
       'price': price,
       'userEmail': _authenticatedUser.name,
       'userId': _authenticatedUser.id,
-      'image':
-          'https://www.google.com/url?sa=i&source=images&cd=&ved=2ahUKEwjXjKeq7OjgAhXJlYsKHYhwDS0QjRx6BAgBEAU&url=http%3A%2F%2Fmikemoir.com%2Fmikemoir%2Fwhy-you-should-treat-your-content-like-a-product%2F&psig=AOvVaw2vByxoH88OTOcwSJ1-oafX&ust=1551801259887514',
+      'image': imageUrl,
     };
-    http.post(url, body: json.encode(data)).then((http.Response response) {
+    return http
+        .post(url + ".json", body: json.encode(data))
+        .then((http.Response response) {
       final Map<String, dynamic> responseData = json.decode(response.body);
       final Product newProduct = Product(
           id: responseData['name'],
@@ -39,7 +46,7 @@ class ConnectedProducts extends Model {
           userEmail: _authenticatedUser.name,
           userId: _authenticatedUser.id);
       _products.add(newProduct);
-      _selProductIndex = null;
+      _isLoading = false;
       notifyListeners();
     });
   }
@@ -59,46 +66,82 @@ mixin ProductsModel on ConnectedProducts {
     return List.from(_products);
   }
 
-  int get selectedProductIndex {
-    return _selProductIndex;
+  String get selectedProductId {
+    return _selProductId;
   }
 
   Product get selectedProduct {
-    if (_selProductIndex == null) {
+    if (_selProductId == null) {
       return null;
     }
-    return _products[_selProductIndex];
+    return _products.firstWhere((product) {
+      return product.id == _selProductId;
+    });
+  }
+
+  int get selectedProductIndex {
+    return _products.indexWhere((product) => product.id == _selProductId);
   }
 
   bool get displayFavoritesOnly {
     return _showFavorites;
   }
 
-  void updateProduct(
+  Future<Null> updateProduct(
       {@required String title,
       @required String description,
       @required String image,
       @required double price}) {
+    _isLoading = true;
+    notifyListeners();
     final Product newProduct = Product(
+        id: selectedProduct.id,
         title: title,
         description: description,
         price: price,
         image: image,
         userEmail: _authenticatedUser.name,
         userId: _authenticatedUser.id);
-    _products[_selProductIndex] = newProduct;
-    notifyListeners();
+    final Map<String, dynamic> data = {
+      'title': title,
+      'description': description,
+      'price': price,
+      'userEmail': _authenticatedUser.name,
+      'userId': _authenticatedUser.id,
+      'image': imageUrl,
+    };
+
+    String newUrl = url + "/${selectedProduct.id}.json";
+    print(newUrl);
+    return http
+        .put(newUrl, body: json.encode(data))
+        .then((http.Response response) {
+      _products[selectedProductIndex] = newProduct;
+      _isLoading = false;
+      notifyListeners();
+    });
   }
 
-  void deleteProduct() {
-    _products.removeAt(_selProductIndex);
+  Future<Null> deleteProduct() {
+    _isLoading = true;
+    var id = selectedProduct.id;
+    int selectedProductIndex =
+        _products.indexWhere((product) => product.id == _selProductId);
+    _products.removeAt(selectedProductIndex);
+    _selProductId = null;
     notifyListeners();
+    String newUrl = url + "/$id.json";
+    return http.delete(newUrl).then((http.Response response) {
+      _isLoading = false;
+      notifyListeners();
+    });
   }
 
   void toggleProductFavoriteStatus() {
     final bool isCurrentlyFavorite = selectedProduct.isFavorite;
     final bool newFavoriteStatus = !isCurrentlyFavorite;
     final Product updatedProduct = Product(
+        id: selectedProduct.id,
         title: selectedProduct.title,
         description: selectedProduct.description,
         price: selectedProduct.price,
@@ -106,33 +149,39 @@ mixin ProductsModel on ConnectedProducts {
         userEmail: selectedProduct.userEmail,
         userId: selectedProduct.userId,
         isFavorite: newFavoriteStatus);
-    _products[_selProductIndex] = updatedProduct;
+    _products[selectedProductIndex] = updatedProduct;
     notifyListeners();
   }
 
-  void fetchProducts() {
-    http.get(url).then((response) {
+  Future<Null> fetchProducts() {
+    _isLoading = true;
+    notifyListeners();
+    return http.get(url + ".json").then((response) {
       final Map<String, dynamic> data = json.decode(response.body);
       final List<Product> products = [];
-      data.forEach((id, data) {
-        products.add(Product(
-          id: id,
-          title: data['title'],
-          description: data['description'],
-          image: data['image'],
-          userId: data['userId'],
-          userEmail: data['userEmail'],
-          price: data['price'],
-        ));
-      });
-      _products = products;
+      if (data != null) {
+        data.forEach((id, data) {
+          products.add(Product(
+            id: id,
+            title: data['title'],
+            description: data['description'],
+            image: data['image'],
+            userId: data['userId'],
+            userEmail: data['userEmail'],
+            price: data['price'],
+          ));
+        });
+        _products = products;
+      }
+      _isLoading = false;
       notifyListeners();
+      _selProductId = null;
     });
   }
 
-  void selectProduct(int index) {
-    _selProductIndex = index;
-    if (index != null) {
+  void selectProduct(String productId) {
+    _selProductId = productId;
+    if (productId != null) {
       notifyListeners();
     }
   }
@@ -146,5 +195,11 @@ mixin ProductsModel on ConnectedProducts {
 mixin UserModel on ConnectedProducts {
   void login(String email, String password) {
     _authenticatedUser = User(id: "cdskmcds", name: email, password: password);
+  }
+}
+
+mixin LCEModel on ConnectedProducts {
+  bool get isLoading {
+    return _isLoading;
   }
 }

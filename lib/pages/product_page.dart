@@ -2,16 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:scoped_model/scoped_model.dart';
-
-import '../widgets/ui_elements/title_default.dart';
 import '../data/models/product.dart';
-import '../data/scoped-models/main.dart';
+import '../widgets/ui_elements/title_default.dart';
 
 class ProductPage extends StatelessWidget {
-  final int productIndex;
+  final Product _product;
 
-  ProductPage(this.productIndex);
+  ProductPage(this._product);
 
   Widget _buildAddressPriceRow(double price) {
     return Row(
@@ -38,37 +35,39 @@ class ProductPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(onWillPop: () {
-      print('Back button pressed!');
-      Navigator.pop(context, false);
-      return Future.value(false);
-    }, child: ScopedModelDescendant<MainModel>(
-      builder: (BuildContext context, Widget child, MainModel model) {
-        final Product product = model.allProducts[productIndex];
-        return Scaffold(
+    return WillPopScope(
+        onWillPop: () {
+          print('Back button pressed!');
+          Navigator.pop(context, false);
+          return Future.value(false);
+        },
+        child: Scaffold(
           appBar: AppBar(
-            title: Text(product.title),
+            title: Text(_product.title),
           ),
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Image.asset(product.image),
+              FadeInImage(
+                image: NetworkImage(_product.image),
+                height: 300,
+                fit: BoxFit.cover,
+                placeholder: AssetImage('assets/food.jpg'),
+              ),
               Container(
                 padding: EdgeInsets.all(10.0),
-                child: TitleDefault(product.title),
+                child: TitleDefault(_product.title),
               ),
-              _buildAddressPriceRow(product.price),
+              _buildAddressPriceRow(_product.price),
               Container(
                 padding: EdgeInsets.all(10.0),
                 child: Text(
-                  product.description,
+                  _product.description,
                   textAlign: TextAlign.center,
                 ),
               )
             ],
           ),
-        );
-      },
-    ));
+        ));
   }
 }

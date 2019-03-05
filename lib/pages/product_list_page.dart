@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
-
 import 'package:scoped_model/scoped_model.dart';
 
 import './product_edit_page.dart';
 import '../data/scoped-models/main.dart';
 
-class ProductListPage extends StatelessWidget {
-  Widget _buildEditButton(
-      BuildContext context, int index, MainModel model) {
+class ProductListPage extends StatefulWidget {
+  final MainModel mainModel;
+
+  ProductListPage(this.mainModel);
+
+  @override
+  State<StatefulWidget> createState() {
+    return _ProductListState();
+  }
+}
+
+class _ProductListState extends State<ProductListPage> {
+  Widget _buildEditButton(BuildContext context, int index, MainModel model) {
     return IconButton(
       icon: Icon(Icons.edit),
       onPressed: () {
-        model.selectProduct(index);
+        model.selectProduct(model.allProducts[index].id);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (BuildContext context) {
-              return ProductEditPage();
+              return ProductEditPage(widget.mainModel);
             },
           ),
         ).then((_) {
@@ -35,7 +44,7 @@ class ProductListPage extends StatelessWidget {
               key: Key(model.allProducts[index].title),
               onDismissed: (DismissDirection direction) {
                 if (direction == DismissDirection.endToStart) {
-                  model.selectProduct(index);
+                  model.selectProduct(model.allProducts[index].id);
                   model.deleteProduct();
                 } else if (direction == DismissDirection.startToEnd) {
                   print('Swiped start to end');
@@ -48,7 +57,8 @@ class ProductListPage extends StatelessWidget {
                 children: <Widget>[
                   ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: NetworkImage(model.allProducts[index].image),
+                      backgroundImage:
+                          NetworkImage(model.allProducts[index].image),
                     ),
                     title: Text(model.allProducts[index].title),
                     subtitle:
