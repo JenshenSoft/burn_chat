@@ -25,10 +25,16 @@ class BurnChatApp extends StatefulWidget {
 
 class _BurnChatAppState extends State<BurnChatApp> {
   var _model = MainModel();
+  bool _isAuth = false;
 
   @override
   void initState() {
     _model.autoAuthenticate();
+    _model.userSubject.listen((isAuth) {
+      setState(() {
+        _isAuth = isAuth;
+      });
+    });
     super.initState();
   }
 
@@ -45,15 +51,18 @@ class _BurnChatAppState extends State<BurnChatApp> {
             buttonColor: Colors.red),
         // home: AuthPage(),
         routes: {
-          '/': (BuildContext context) => ScopedModelDescendant<MainModel>(
-                  builder: (context, widget, model) {
-                return model.user == null ? AuthPage() : ProductsPage(_model);
-              }),
-          '/products': (BuildContext context) => ProductsPage(_model),
-          '/admin': (BuildContext context) => ProductsAdminPage(_model),
+          '/': (BuildContext context) =>
+              !_isAuth ? AuthPage() : ProductsPage(_model),
+          '/admin': (BuildContext context) =>
+              !_isAuth ? AuthPage() : ProductsAdminPage(_model),
         },
         // link: /product/21
         onGenerateRoute: (RouteSettings settings) {
+          if (!_isAuth) {
+            return MaterialPageRoute<bool>(
+              builder: (BuildContext context) => AuthPage(),
+            );
+          }
           final List<String> pathElements = settings.name.split('/');
           if (pathElements[0] != '') {
             return null;
@@ -63,14 +72,16 @@ class _BurnChatAppState extends State<BurnChatApp> {
             final Product product =
                 _model.allProducts.firstWhere((p) => p.id == productId);
             return MaterialPageRoute<bool>(
-              builder: (BuildContext context) => ProductPage(product),
+              builder: (BuildContext context) =>
+                  !_isAuth ? AuthPage() : ProductPage(product),
             );
           }
           return null;
         },
         onUnknownRoute: (RouteSettings settings) {
           return MaterialPageRoute(
-              builder: (BuildContext context) => ProductsPage(null));
+              builder: (BuildContext context) =>
+                  !_isAuth ? AuthPage() : ProductsPage(_model));
         },
       ),
     );

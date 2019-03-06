@@ -98,7 +98,7 @@ class _AuthPageState extends State<AuthPage> {
     var map = await authenticate(
         _formData['email'], _formData['password'], _authMode);
     if (map['success']) {
-      Navigator.pushReplacementNamed(context, '/products');
+      //Navigator.pushReplacementNamed(context, '/');
     } else {
       showDialog(
           context: context,

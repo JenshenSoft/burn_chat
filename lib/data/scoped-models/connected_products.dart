@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
+import 'package:rxdart/subjects.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -235,6 +236,12 @@ mixin ProductsModel on ConnectedProducts {
 }
 
 mixin UserModel on ConnectedProducts {
+  PublishSubject<bool> _userSubject = PublishSubject();
+
+  PublishSubject<bool> get userSubject {
+    return _userSubject;
+  }
+
   User get user {
     return _authenticatedUser;
   }
@@ -279,6 +286,7 @@ mixin UserModel on ConnectedProducts {
       prefs.setString("id", _authenticatedUser.id);
       prefs.setString("email", _authenticatedUser.email);
       prefs.setString("token", _authenticatedUser.token);
+      _userSubject.add(true);
     } else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
       message = 'This email already exists.';
     } else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND') {
@@ -298,8 +306,18 @@ mixin UserModel on ConnectedProducts {
       final String userEmail = prefs.getString('userEmail');
       final String userId = prefs.getString('userId');
       _authenticatedUser = User(id: userId, email: userEmail, token: token);
+      _userSubject.add(true);
       notifyListeners();
     }
+  }
+
+  void logout() async {
+    _authenticatedUser = null;
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('token');
+    prefs.remove('userEmail');
+    prefs.remove('userId');
+    _userSubject.add(false);
   }
 }
 
