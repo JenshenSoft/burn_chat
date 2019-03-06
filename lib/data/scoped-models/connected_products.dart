@@ -172,9 +172,25 @@ mixin ProductsModel on ConnectedProducts {
     });
   }
 
-  void toggleProductFavoriteStatus() {
+  void toggleProductFavoriteStatus() async {
     final bool isCurrentlyFavorite = selectedProduct.isFavorite;
     final bool newFavoriteStatus = !isCurrentlyFavorite;
+
+    var response;
+    if (newFavoriteStatus) {
+      response = await http.put(
+          url +
+              '/${selectedProduct.id}/wishlistUsers/${_authenticatedUser.id}' +
+              auth + _authenticatedUser.token,
+          body: 'true');
+    } else {
+      response = await http.delete(url +
+          '/${selectedProduct.id}/wishlistUsers/${_authenticatedUser.id}' +
+          auth + _authenticatedUser.token);
+    }
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      return;
+    }
     final Product updatedProduct = Product(
         id: selectedProduct.id,
         title: selectedProduct.title,
@@ -209,6 +225,8 @@ mixin ProductsModel on ConnectedProducts {
             userId: data['userId'],
             userEmail: data['userEmail'],
             price: data['price'],
+            isFavorite: data['data'] == null ? false : (data['data'] as Map<String, dynamic>)
+                .containsKey(_authenticatedUser.id),
           ));
         });
         _products = products;
